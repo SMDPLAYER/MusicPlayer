@@ -1,0 +1,10 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/tab_home"
+        android:icon="@drawable/ic_home_outline"
+        android:title="@string/home" />
+    <item
+        android:id="@+id/tab_favourite"
+        android:icon="@drawable/ic_fav_outline"
+        android:title="@string/favourite" />
+</menu>
