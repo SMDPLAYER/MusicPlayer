@@ -35,7 +35,6 @@ class MusicAdapter(private val musicList: ArrayList<MusicFile>, private val cont
 
         holder.itemView.setOnClickListener {
             AppController.currentListIndex = position
-            context?.finish()
             context?.startActivity(Intent(context, PlayerActivity::class.java))
         }
     }

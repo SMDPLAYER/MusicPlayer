@@ -40,8 +40,7 @@ import kotlinx.coroutines.launch
 import uz.smd.musicplayer.databinding.ActivityPlayerBinding
 
 class PlayerActivity : AppCompatActivity(R.layout.activity_player), PlayerInterface, ServiceConnection {
-
-    private val viewBinding: ActivityPlayerBinding by viewBinding(ActivityPlayerBinding::bind,R.id.rootview)
+    private var viewBinding: ActivityPlayerBinding? =null
     //    var mediaPlayer: MediaPlayer? = null
     lateinit var musicService: MusicService
 
@@ -55,6 +54,8 @@ class PlayerActivity : AppCompatActivity(R.layout.activity_player), PlayerInterf
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        viewBinding = ActivityPlayerBinding.inflate(layoutInflater)
+        setContentView(viewBinding?.root)
         mediaSessionCompat = MediaSessionCompat(baseContext, "My Service")
         bindService()
         clicks()
@@ -75,7 +76,7 @@ class PlayerActivity : AppCompatActivity(R.layout.activity_player), PlayerInterf
     }
 
     private fun clicks() {
-        viewBinding.apply {
+        viewBinding?.apply {
         fastRewindIv.setOnClickListener {
             previousSong()
         }
@@ -113,17 +114,17 @@ class PlayerActivity : AppCompatActivity(R.layout.activity_player), PlayerInterf
 
     private fun setRepeat() {
         if (isRepeat) {
-            viewBinding.repeatIv.setColorFilter(resources.getColor(R.color.bay_of_many), PorterDuff.Mode.SRC_IN)
+            viewBinding?.repeatIv?.setColorFilter(resources.getColor(R.color.bay_of_many), PorterDuff.Mode.SRC_IN)
         } else {
-            viewBinding.repeatIv.setColorFilter(resources.getColor(R.color.white), PorterDuff.Mode.SRC_IN)
+            viewBinding?.repeatIv?.setColorFilter(resources.getColor(R.color.white), PorterDuff.Mode.SRC_IN)
         }
     }
 
     private fun setShuffle() {
         if (isShuffle) {
-            viewBinding.shuffleIv.setColorFilter(resources.getColor(R.color.bay_of_many), PorterDuff.Mode.SRC_IN)
+            viewBinding?.shuffleIv?.setColorFilter(resources.getColor(R.color.bay_of_many), PorterDuff.Mode.SRC_IN)
         } else {
-            viewBinding.shuffleIv.setColorFilter(resources.getColor(R.color.white), PorterDuff.Mode.SRC_IN)
+            viewBinding?.shuffleIv?.setColorFilter(resources.getColor(R.color.white), PorterDuff.Mode.SRC_IN)
         }
     }
 
@@ -169,15 +170,17 @@ class PlayerActivity : AppCompatActivity(R.layout.activity_player), PlayerInterf
     private fun blurImage() {
         val bitmapImage = AppController.musicList.get(AppController.currentListIndex).thumbnail
         if (bitmapImage != null) {
-            imageAnimation(this, viewBinding.musicPoster, bitmapImage)
-            viewBinding.blurImage.setImageBitmap(bitmapImage)
+            viewBinding?.let {
+                imageAnimation(this, it.musicPoster, bitmapImage)
+            }
+            viewBinding?.blurImage?.setImageBitmap(bitmapImage)
         } else {
-            viewBinding.musicPoster.setImageResource(R.drawable.ic_launcher_music)
+            viewBinding?.musicPoster?.setImageResource(R.drawable.ic_launcher_music)
         }
     }
 
     private fun setTitleAndArtistName() {
-        viewBinding.apply {
+        viewBinding?.apply {
         artistName.text = AppController.musicList.get(AppController.currentListIndex).artist
         songTitle.text = AppController.musicList.get(AppController.currentListIndex).title
 
@@ -188,7 +191,7 @@ class PlayerActivity : AppCompatActivity(R.layout.activity_player), PlayerInterf
 
     private fun playMusic() {
         isPlaying = true
-        viewBinding.musicPlayPauseIv.setImageDrawable(resources.getDrawable(R.drawable.ic_pause))
+        viewBinding?.musicPlayPauseIv?.setImageDrawable(resources.getDrawable(R.drawable.ic_pause))
         val path = Uri.parse(AppController.musicList.get(AppController.currentListIndex).data)
         if (musicService.mediaPlayer != null) {
             musicService.mediaPlayer?.stop()
@@ -215,7 +218,7 @@ class PlayerActivity : AppCompatActivity(R.layout.activity_player), PlayerInterf
 
 
     private fun setSeekBar() {
-        viewBinding.apply {
+        viewBinding?.apply {
         seekbar.progressDrawable.setColorFilter(Color.parseColor("#1e3c7c"), PorterDuff.Mode.MULTIPLY)
         seekbar.thumb.setColorFilter(Color.parseColor("#ffffff"), PorterDuff.Mode.SRC_ATOP)
         seekbar.max = musicService.mediaPlayer?.duration!!
@@ -247,8 +250,8 @@ class PlayerActivity : AppCompatActivity(R.layout.activity_player), PlayerInterf
     suspend fun updateSeekBar() {
         while (musicService.mediaPlayer != null) {
             delay(1000L)
-            viewBinding.seekbar.setProgress(musicService.mediaPlayer?.currentPosition!!)
-            viewBinding.currentDuration.text = convertSecondsToSsMm(musicService.mediaPlayer?.currentPosition!!)
+            viewBinding?.seekbar?.setProgress(musicService.mediaPlayer?.currentPosition!!)
+            viewBinding?.currentDuration?.text = convertSecondsToSsMm(musicService.mediaPlayer?.currentPosition!!)
         }
     }
 
@@ -260,7 +263,7 @@ class PlayerActivity : AppCompatActivity(R.layout.activity_player), PlayerInterf
 
     private fun resumeMusic() {
         isPlaying = true
-        viewBinding.musicPlayPauseIv.setImageDrawable(resources.getDrawable(R.drawable.ic_pause))
+        viewBinding?.musicPlayPauseIv?.setImageDrawable(resources.getDrawable(R.drawable.ic_pause))
         if (musicService.mediaPlayer != null) {
             musicService.mediaPlayer?.start()
             showNotification(R.drawable.ic_pause)
@@ -269,7 +272,7 @@ class PlayerActivity : AppCompatActivity(R.layout.activity_player), PlayerInterf
 
     private fun pauseMusic() {
         isPlaying = false
-        viewBinding.musicPlayPauseIv.setImageDrawable(resources.getDrawable(R.drawable.ic_play))
+        viewBinding?.musicPlayPauseIv?.setImageDrawable(resources.getDrawable(R.drawable.ic_play))
         if (musicService.mediaPlayer != null) {
             musicService.mediaPlayer?.pause()
             showNotification(R.drawable.ic_play)
@@ -286,6 +289,7 @@ class PlayerActivity : AppCompatActivity(R.layout.activity_player), PlayerInterf
     override fun onDestroy() {
         super.onDestroy()
         stopMusic()
+        viewBinding=null
         unbindService(this)
     }
 
@@ -341,11 +345,11 @@ class PlayerActivity : AppCompatActivity(R.layout.activity_player), PlayerInterf
         val songId = AppController.musicList.get(AppController.currentListIndex).id
         if (isFavourite) {
             FavSongDatabase.getInstance(baseContext).songDao().delete(FavSongModel(songId = songId , id = favouriteSongId))
-            viewBinding.favouriteIv.setImageResource(R.drawable.ic_favourite_outline)
+            viewBinding?.favouriteIv?.setImageResource(R.drawable.ic_favourite_outline)
             Toast.makeText(this , "removed from favourite" , Toast.LENGTH_SHORT).show()
         }else {
             FavSongDatabase.getInstance(baseContext).songDao().insert(FavSongModel(songId = songId , id = 0))
-            viewBinding.favouriteIv.setImageResource(R.drawable.ic_favourite)
+            viewBinding?.favouriteIv?.setImageResource(R.drawable.ic_favourite)
             Toast.makeText(this , "added to favourite" , Toast.LENGTH_SHORT).show()
         }
     }
@@ -355,9 +359,9 @@ class PlayerActivity : AppCompatActivity(R.layout.activity_player), PlayerInterf
         val list = database.songDao().getAll()
         isFavourite = checkForCurrentSong(list)
         if (isFavourite) {
-            viewBinding.favouriteIv.setImageResource(R.drawable.ic_favourite)
+            viewBinding?.favouriteIv?.setImageResource(R.drawable.ic_favourite)
         } else {
-            viewBinding.favouriteIv.setImageResource(R.drawable.ic_favourite_outline)
+            viewBinding?.favouriteIv?.setImageResource(R.drawable.ic_favourite_outline)
         }
     }
 
